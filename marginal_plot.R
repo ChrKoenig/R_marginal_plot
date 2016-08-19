@@ -2,9 +2,10 @@ marginal_plot = function(x, y, group = NULL, data = NULL, lm_formula = y ~ x, bw
   require(scales)
   ###############
   # Plots a scatterplot with marginal probability density functions for x and y. 
-  # Data may be grouped or ungrouped. For each group, a linear fit is plotted. The model can be modified using the 'lm_formula' argument. Setting 'lm_formula' to NULL prevents plotting model fits.
+  # Data may be grouped or ungrouped. 
+  # For each group, a linear fit is plotted. The model can be modified using the 'lm_formula' argument. Setting 'lm_formula' to NULL prevents plotting model fits.
   # The 'bw' argument specifies the bandwidth rule used for estimating probability density functions. See ?density for more information.
-  # To increase large datasets, opacity may be set with alpha.
+  # For large datasets, opacity may be decreased by setting alpha to a value between 0 and 1.
   # Additional graphical parameters are passed to the main plot, so you can customize axis labels, titles etc.
   ###############
   moreargs = eval(substitute(list(...)))
@@ -52,8 +53,9 @@ marginal_plot = function(x, y, group = NULL, data = NULL, lm_formula = y ~ x, bw
     moreargs$log = NULL # remove to prevent double logarithm when plotting
   }
   
-  # remove unwanted argument(s) from moreargs
+  # Catch unwanted user inputs
   if(!is.null(moreargs$col)){moreargs$col = NULL}
+  if(!is.null(moreargs$type)){moreargs$type = "p"}
   
   # get some default plotting arguments
   if(is.null(moreargs$xlim)){moreargs$xlim = range(data$x)} 
