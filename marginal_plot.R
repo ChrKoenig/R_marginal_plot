@@ -1,4 +1,4 @@
-marginal_plot = function(x, y, group = NULL, data = NULL, lm_formula = y ~ x, alpha = 1, ...){
+marginal_plot = function(x, y, group = NULL, data = NULL, lm_formula = y ~ x, alpha = 1, plot_legend = T, ...){
   require(scales)
   ###############
   # Plots a scatterplot with marginal probability density functions for x and y. 
@@ -6,7 +6,7 @@ marginal_plot = function(x, y, group = NULL, data = NULL, lm_formula = y ~ x, al
   # additional par arguments are passed to the main plot, so you can customize axis labels, 
   ###############
   moreargs = eval(substitute(list(...)))
-
+  
   # prepare consistent df
   if(missing(group)){
     if(missing(data)){
@@ -33,12 +33,12 @@ marginal_plot = function(x, y, group = NULL, data = NULL, lm_formula = y ~ x, al
     if(sum(!complete.cases(data)) > 0){
       warning(sprintf("Removed %i rows with missing data", sum(!complete.cases(data))))
       data = data[complete.cases(data),]
-      }
+    }
     data = subset(data, group %in% names(which(table(data$group) > 5)))
     data$group = droplevels(data$group)
     group_colors = rainbow(length(unique(data$group)))
   } 
-
+  
   # log-transform data (this is need for correct plotting of density functions)
   if(!is.null(moreargs$log)){
     if(!moreargs$log %in% c("y", "x", "yx", "xy")){
@@ -54,24 +54,33 @@ marginal_plot = function(x, y, group = NULL, data = NULL, lm_formula = y ~ x, al
   if(!is.null(moreargs$col)){moreargs$col = NULL}
   
   # create testplot and retrieve axis limits for exact alignment
-  testplot <- do.call(plot, c(list(x = quote(data$x), y = quote(data$y)), moreargs))
-  plot_dims = par("usr")
+  if(is.null(moreargs$xlim) | is.null(moreargs$ylim)){
+    testplot <- do.call(plot, c(list(x = quote(data$x), y = quote(data$y)), moreargs))
+    plot_dims = par("usr")
+    moreargs$xlim = plot_dims[1:2]                
+    moreargs$ylim = plot_dims[3:4]
+  }
+  
+  if(is.null(moreargs$xlab)){moreargs$xlab = deparse(substitute(x))}
+  if(is.null(moreargs$ylab)){moreargs$ylab = deparse(substitute(y))}
   
   ifelse(!is.null(data$group), data_split <- split(data, data$group), data_split <- list(data))
   
-  par(mar = c(0,5,1,1))
+  par(mar = c(0.25,5,1,0))
   layout(matrix(1:4, nrow = 2, byrow = T), widths = c(10,3), heights = c(3,10))
-
+  
   # upper density plot
-  plot(NULL, type = "n", xlim = plot_dims[1:2], ylab = "density",
+  plot(NULL, type = "n", xlim = moreargs$xlim, ylab = "density",
        ylim = c(0, max(sapply(data_split, function(group_set) max(density(group_set$x, bw = "SJ")$y)))), main = NA, axes = F)
   axis(2, las = 1)
   mapply(function(group_set, group_color){lines(density(group_set$x, bw = "SJ"), col = group_color, lwd = 2)}, data_split, group_colors)
   
   # legend
-  par(mar = c(0,0,0,0))
+  par(mar = c(0.25,0.25,0,0))
   plot.new()
-  if(!missing(group)){legend("center", levels(data$group), fill = group_colors, border = group_colors, bty = "n")}
+  if(!missing(group) & plot_legend){
+    legend("center", levels(data$group), fill = group_colors, border = group_colors, bty = "n", title = deparse(substitute(group)), title.adj = 0)
+  }
   
   # main plot
   par(mar = c(4,5,0,0))
@@ -89,8 +98,8 @@ marginal_plot = function(x, y, group = NULL, data = NULL, lm_formula = y ~ x, al
   }, data_split, rgb(t(ceiling(col2rgb(group_colors)*0.8)), maxColorValue = 255))
   
   # right density plot
-  par(mar = c(4,0,0,1))
-  plot(NULL, type = "n", ylim = plot_dims[3:4], xlim = c(0, max(sapply(data_split, function(group_set) max(density(group_set$y, bw = "SJ")$y)))), main = NA, axes = F, xlab = "density")
+  par(mar = c(4,0.25,0,1))
+  plot(NULL, type = "n", ylim = moreargs$ylim, xlim = c(0, max(sapply(data_split, function(group_set) max(density(group_set$y, bw = "SJ")$y)))), main = NA, axes = F, xlab = "density")
   mapply(function(group_set, group_color){lines(x = density(group_set$y, bw = "SJ")$y, y = density(group_set$y, bw = "SJ")$x, col = group_color, lwd = 2)}, data_split, group_colors)
   axis(1)
 }
