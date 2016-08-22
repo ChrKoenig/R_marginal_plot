@@ -1,4 +1,4 @@
-marginal_plot = function(x, y, group = NULL, data = NULL, lm_formula = y ~ x, bw = "SJ", alpha = 1, plot_legend = T, ...){
+marginal_plot = function(x, y, group = NULL, data = NULL, lm_formula = y ~ x, bw = "nrd0", alpha = 1, plot_legend = T, ...){
   require(scales)
   ###############
   # Plots a scatterplot with marginal probability density functions for x and y. 
@@ -65,46 +65,51 @@ marginal_plot = function(x, y, group = NULL, data = NULL, lm_formula = y ~ x, bw
   if(is.null(moreargs$las)){moreargs$las = 1} 
   
   # plotting
-  ifelse(!is.null(data$group), data_split <- split(data, data$group), data_split <- list(data))
-  par(mar = c(0.25,5,1,0))
-  layout(matrix(1:4, nrow = 2, byrow = T), widths = c(10,3), heights = c(3,10))
-  
-  # upper density plot
-  plot(NULL, type = "n", xlim = moreargs$xlim, ylab = "density",
-       ylim = c(0, max(sapply(data_split, function(group_set) max(density(group_set$x, bw = bw)$y)))), main = NA, axes = F)
-  axis(2, las = 1)
-  mapply(function(group_set, group_color){lines(density(group_set$x, bw = bw), col = group_color, lwd = 2)}, data_split, group_colors)
-  
-  # legend
-  par(mar = c(0.25,0.25,0,0))
-  plot.new()
-  if(!missing(group) & plot_legend){
-    legend("center", levels(data$group), fill = group_colors, border = group_colors, bty = "n", title = deparse(substitute(group)), title.adj = 0.1)
-  }
-  
-  # main plot
-  par(mar = c(4,5,0,0))
-  if(missing(group)){
-    do.call(plot, c(list(x = quote(data$x), y = quote(data$y), col = quote(scales::alpha("black", alpha))), moreargs))
-  } else {
-    do.call(plot, c(list(x = quote(data$x), y = quote(data$y), col = quote(scales::alpha(group_colors[data$group], alpha))), moreargs))
-  }
-  axis(3, labels = F, tck = 0.01)
-  axis(4, labels = F, tck = 0.01)
-  box()
-  
-  if(!is.null(lm_formula)){
-    mapply(function(group_set, group_color){
-      lm_tmp = lm(lm_formula, data = group_set)
-      x_coords = seq(min(group_set$x), max(group_set$x), length.out = 100)
-      y_coords = predict(lm_tmp, newdata = data.frame(x = x_coords))
-      lines(x = x_coords, y = y_coords, col = group_color, lwd = 2.5)
-    }, data_split, rgb(t(ceiling(col2rgb(group_colors)*0.8)), maxColorValue = 255))
-  }
-  
-  # right density plot
-  par(mar = c(4,0.25,0,1))
-  plot(NULL, type = "n", ylim = moreargs$ylim, xlim = c(0, max(sapply(data_split, function(group_set) max(density(group_set$y, bw = bw)$y)))), main = NA, axes = F, xlab = "density")
-  mapply(function(group_set, group_color){lines(x = density(group_set$y, bw = bw)$y, y = density(group_set$y, bw = bw)$x, col = group_color, lwd = 2)}, data_split, group_colors)
-  axis(1)
+  tryCatch(expr = {
+    ifelse(!is.null(data$group), data_split <- split(data, data$group), data_split <- list(data))
+    orig_par = par(no.readonly = T)
+    par(mar = c(0.25,5,1,0))
+    layout(matrix(1:4, nrow = 2, byrow = T), widths = c(10,3), heights = c(3,10))
+    
+    # upper density plot
+    plot(NULL, type = "n", xlim = moreargs$xlim, ylab = "density",
+         ylim = c(0, max(sapply(data_split, function(group_set) max(density(group_set$x, bw = bw)$y)))), main = NA, axes = F)
+    axis(2, las = 1)
+    mapply(function(group_set, group_color){lines(density(group_set$x, bw = bw), col = group_color, lwd = 2)}, data_split, group_colors)
+    
+    # legend
+    par(mar = c(0.25,0.25,0,0))
+    plot.new()
+    if(!missing(group) & plot_legend){
+      legend("center", levels(data$group), fill = group_colors, border = group_colors, bty = "n", title = deparse(substitute(group)), title.adj = 0.1)
+    }
+    
+    # main plot
+    par(mar = c(4,5,0,0))
+    if(missing(group)){
+      do.call(plot, c(list(x = quote(data$x), y = quote(data$y), col = quote(scales::alpha("black", alpha))), moreargs))
+    } else {
+      do.call(plot, c(list(x = quote(data$x), y = quote(data$y), col = quote(scales::alpha(group_colors[data$group], alpha))), moreargs))
+    }
+    axis(3, labels = F, tck = 0.01)
+    axis(4, labels = F, tck = 0.01)
+    box()
+    
+    if(!is.null(lm_formula)){
+      mapply(function(group_set, group_color){
+        lm_tmp = lm(lm_formula, data = group_set)
+        x_coords = seq(min(group_set$x), max(group_set$x), length.out = 100)
+        y_coords = predict(lm_tmp, newdata = data.frame(x = x_coords))
+        lines(x = x_coords, y = y_coords, col = group_color, lwd = 2.5)
+      }, data_split, rgb(t(ceiling(col2rgb(group_colors)*0.8)), maxColorValue = 255))
+    }
+    
+    # right density plot
+    par(mar = c(4,0.25,0,1))
+    plot(NULL, type = "n", ylim = moreargs$ylim, xlim = c(0, max(sapply(data_split, function(group_set) max(density(group_set$y, bw = bw)$y)))), main = NA, axes = F, xlab = "density")
+    mapply(function(group_set, group_color){lines(x = density(group_set$y, bw = bw)$y, y = density(group_set$y, bw = bw)$x, col = group_color, lwd = 2)}, data_split, group_colors)
+    axis(1)
+  }, finally = {
+    par(orig_par)
+  })
 }
