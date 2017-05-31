@@ -1,10 +1,11 @@
-marginal_plot = function(x, y, group = NULL, data = NULL, lm_formula = y ~ x, bw = "nrd0", alpha = 1, plot_legend = T, ...){
+marginal_plot = function(x, y, group = NULL, data = NULL, lm_show = FALSE, lm_formula = y ~ x, bw = "nrd0", adjust = 1, alpha = 1, plot_legend = T, ...){
   require(scales)
   ###############
   # Plots a scatterplot with marginal probability density functions for x and y. 
   # Data may be grouped or ungrouped. 
-  # For each group, a linear fit is plotted. The model can be modified using the 'lm_formula' argument. Setting 'lm_formula' to NULL prevents plotting model fits.
-  # The 'bw' argument specifies the bandwidth rule used for estimating probability density functions. See ?density for more information.
+  # For each group, a linear fit can be plotted. It is hidden by default, but can be shown by providing lm_show = TRUE.
+  # The model can be modified using the 'lm_formula' argument.
+  # The 'bw' and 'adjust' argument specify the granularity used for estimating probability density functions. See ?density for more information.
   # For large datasets, opacity may be decreased by setting alpha to a value between 0 and 1.
   # Additional graphical parameters are passed to the main plot, so you can customize axis labels, titles etc.
   ###############
@@ -75,7 +76,7 @@ marginal_plot = function(x, y, group = NULL, data = NULL, lm_formula = y ~ x, bw
     plot(NULL, type = "n", xlim = moreargs$xlim, ylab = "density",
          ylim = c(0, max(sapply(data_split, function(group_set) max(density(group_set$x, bw = bw)$y)))), main = NA, axes = F)
     axis(2, las = 1)
-    mapply(function(group_set, group_color){lines(density(group_set$x, bw = bw), col = group_color, lwd = 2)}, data_split, group_colors)
+    mapply(function(group_set, group_color){lines(density(group_set$x, bw = bw, adjust = adjust), col = group_color, lwd = 2)}, data_split, group_colors)
     
     # legend
     par(mar = c(0.25,0.25,0,0))
@@ -95,7 +96,7 @@ marginal_plot = function(x, y, group = NULL, data = NULL, lm_formula = y ~ x, bw
     axis(4, labels = F, tck = 0.01)
     box()
     
-    if(!is.null(lm_formula)){
+    if(lm_show == TRUE & !is.null(lm_formula)){
       mapply(function(group_set, group_color){
         lm_tmp = lm(lm_formula, data = group_set)
         x_coords = seq(min(group_set$x), max(group_set$x), length.out = 100)
@@ -107,7 +108,7 @@ marginal_plot = function(x, y, group = NULL, data = NULL, lm_formula = y ~ x, bw
     # right density plot
     par(mar = c(4,0.25,0,1))
     plot(NULL, type = "n", ylim = moreargs$ylim, xlim = c(0, max(sapply(data_split, function(group_set) max(density(group_set$y, bw = bw)$y)))), main = NA, axes = F, xlab = "density")
-    mapply(function(group_set, group_color){lines(x = density(group_set$y, bw = bw)$y, y = density(group_set$y, bw = bw)$x, col = group_color, lwd = 2)}, data_split, group_colors)
+    mapply(function(group_set, group_color){lines(x = density(group_set$y, bw = bw, adjust = adjust)$y, y = density(group_set$y, bw = bw)$x, col = group_color, lwd = 2)}, data_split, group_colors)
     axis(1)
   }, finally = {
     par(orig_par)
