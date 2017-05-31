@@ -14,11 +14,11 @@ marginal_plot(x = iris$Sepal.Width, y = iris$Sepal.Length)
 ![](/example_plots/plot1.png)
 
 ```R
-marginal_plot(x = Sepal.Width, y = Sepal.Length, group = Species, data = iris)
+marginal_plot(x = Sepal.Width, y = Sepal.Length, group = Species, data = iris, lm_show = T)
 ```
 ![](/example_plots/plot2.png)
 
 ```R
-marginal_plot(x = Sepal.Width, y = Sepal.Length, group = Species, data = iris, bw = "nrd", lm_formula = NULL, xlab = "Sepal width", ylab = "Sepal length", pch = 15, cex = 0.5)
+marginal_plot(x = Sepal.Width, y = Sepal.Length, group = Species, data = iris, bw = "nrd", xlab = "Sepal width", ylab = "Sepal length", pch = 15, cex = 0.5)
 ```
 ![](/example_plots/plot3.png)
